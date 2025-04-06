@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Nova Abordagem - Sistema de Registro de Abordagens Policiais{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    .preview-image {
+        max-width: 300px;
+        max-height: 300px;
+        margin-top: 10px;
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="mb-0">Nova Abordagem</h2>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    {{ form.csrf_token }}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.nome_completo.label(class="form-label") }}
+                                {{ form.nome_completo(class="form-control" + (" is-invalid" if form.nome_completo.errors else "")) }}
+                                {% if form.nome_completo.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.nome_completo.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.nome_mae.label(class="form-label") }}
+                                {{ form.nome_mae(class="form-control" + (" is-invalid" if form.nome_mae.errors else "")) }}
+                                {% if form.nome_mae.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.nome_mae.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.vulgo.label(class="form-label") }}
+                                {{ form.vulgo(class="form-control" + (" is-invalid" if form.vulgo.errors else "")) }}
+                                {% if form.vulgo.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.vulgo.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.cpf.label(class="form-label") }}
+                                {{ form.cpf(class="form-control" + (" is-invalid" if form.cpf.errors else "")) }}
+                                {% if form.cpf.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.cpf.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.data_nascimento.label(class="form-label") }}
+                                {{ form.data_nascimento(class="form-control" + (" is-invalid" if form.data_nascimento.errors else ""), type="date") }}
+                                {% if form.data_nascimento.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.data_nascimento.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.endereco_abordagem.label(class="form-label") }}
+                                {{ form.endereco_abordagem(class="form-control" + (" is-invalid" if form.endereco_abordagem.errors else "")) }}
+                                {% if form.endereco_abordagem.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.endereco_abordagem.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        {{ form.observacoes.label(class="form-label") }}
+                        {{ form.observacoes(class="form-control" + (" is-invalid" if form.observacoes.errors else ""), rows="4") }}
+                        {% if form.observacoes.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.observacoes.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        {{ form.imagem.label(class="form-label") }}
+                        {{ form.imagem(class="form-control" + (" is-invalid" if form.imagem.errors else "")) }}
+                        {% if form.imagem.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.imagem.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div id="imagePreview" class="mt-2" style="display: none;">
+                            <img src="" alt="Preview" class="img-thumbnail" style="max-height: 200px;">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        {{ form.historico_pca.label(class="form-label") }}
+                        {{ form.historico_pca(class="form-control" + (" is-invalid" if form.historico_pca.errors else "")) }}
+                        {% if form.historico_pca.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.historico_pca.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div id="historicoPreview" class="mt-2" style="display: none;">
+                            <img src="" alt="Preview" class="img-thumbnail" style="max-height: 200px;">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group mt-4">
+                        <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancelar</a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function previewImage(input, previewId) {
+    const preview = document.getElementById(previewId);
+    const img = preview.querySelector('img');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            img.src = e.target.result;
+            preview.style.display = 'block';
+        }
+        
+        reader.readAsDataURL(input.files[0]);
+    } else {
+        preview.style.display = 'none';
+    }
+}
+
+document.querySelector('input[name="imagem"]').addEventListener('change', function() {
+    previewImage(this, 'imagePreview');
+});
+
+document.querySelector('input[name="historico_pca"]').addEventListener('change', function() {
+    previewImage(this, 'historicoPreview');
+});
+</script>
+{% endblock %} 

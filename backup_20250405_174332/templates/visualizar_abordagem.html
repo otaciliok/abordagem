@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Detalhes da Abordagem - Sistema de Registro de Abordagens Policiais{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-group {
+        margin-bottom: 1.5rem;
+    }
+    .detail-label {
+        font-weight: bold;
+        color: #666;
+    }
+    .detail-value {
+        color: #333;
+    }
+    .image-container {
+        max-width: 500px;
+        margin: 20px 0;
+    }
+    .image-container img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">Detalhes da Abordagem</h2>
+                <div>
+                    <a href="{{ url_for('editar_abordagem', id=abordagem.id) }}" class="btn btn-primary">Editar</a>
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                        Excluir
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="detail-group">
+                            <div class="detail-label">Nome Completo</div>
+                            <div class="detail-value">{{ abordagem.nome_completo }}</div>
+                        </div>
+                        
+                        <div class="detail-group">
+                            <div class="detail-label">Vulgo</div>
+                            <div class="detail-value">{{ abordagem.vulgo or 'Não informado' }}</div>
+                        </div>
+                        
+                        <div class="detail-group">
+                            <div class="detail-label">CPF</div>
+                            <div class="detail-value">{{ abordagem.cpf or 'Não informado' }}</div>
+                        </div>
+                        
+                        <div class="detail-group">
+                            <div class="detail-label">Data de Nascimento</div>
+                            <div class="detail-value">{{ abordagem.data_nascimento.strftime('%d/%m/%Y') if abordagem.data_nascimento else 'Não informado' }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="detail-group">
+                            <div class="detail-label">Data e Hora da Abordagem</div>
+                            <div class="detail-value">{{ abordagem.data_hora.strftime('%d/%m/%Y %H:%M') }}</div>
+                        </div>
+                        
+                        <div class="detail-group">
+                            <div class="detail-label">Endereço da Abordagem</div>
+                            <div class="detail-value">{{ abordagem.endereco_abordagem }}</div>
+                        </div>
+                        
+                        <div class="detail-group">
+                            <div class="detail-label">Observações</div>
+                            <div class="detail-value">{{ abordagem.observacoes or 'Nenhuma observação registrada' }}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if abordagem.imagem %}
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <div class="detail-group">
+                            <div class="detail-label">Imagem</div>
+                            <div class="image-container">
+                                <img src="{{ url_for('static', filename='uploads/' + abordagem.imagem) }}" alt="Imagem da abordagem">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação de Exclusão -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirmar Exclusão</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Tem certeza que deseja excluir esta abordagem? Esta ação não pode ser desfeita.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form action="{{ url_for('excluir_abordagem', id=abordagem.id) }}" method="post" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger">Confirmar Exclusão</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
