@@ -34,10 +34,12 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h2 class="mb-0">Detalhes da Abordagem</h2>
                 <div>
+                    {% if current_user.nivel_acesso != 'usuario' %}
                     <a href="{{ url_for('editar_abordagem', id=abordagem.id) }}" class="btn btn-primary">Editar</a>
                     <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
                         Excluir
                     </button>
+                    {% endif %}
                 </div>
             </div>
             <div class="card-body">
@@ -93,7 +95,12 @@
                 <div class="row mt-4">
                     <div class="col-md-12">
                         <div class="detail-group">
-                            <div class="detail-label">Imagem</div>
+                            <div class="detail-label d-flex justify-content-between align-items-center">
+                                <span>Imagem</span>
+                                <a href="{{ url_for('uploaded_file', filename=abordagem.imagem) }}" download class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-download"></i> Download
+                                </a>
+                            </div>
                             <div class="image-container">
                                 <img src="{{ url_for('uploaded_file', filename=abordagem.imagem) }}" alt="Imagem da abordagem">
                             </div>
@@ -106,7 +113,12 @@
                 <div class="row mt-4">
                     <div class="col-md-12">
                         <div class="detail-group">
-                            <div class="detail-label">Histórico do PCA</div>
+                            <div class="detail-label d-flex justify-content-between align-items-center">
+                                <span>Histórico do PCA</span>
+                                <a href="{{ url_for('uploaded_file', filename=abordagem.historico_pca) }}" download class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-download"></i> Download
+                                </a>
+                            </div>
                             <div class="image-container">
                                 <img src="{{ url_for('uploaded_file', filename=abordagem.historico_pca) }}" alt="Histórico do PCA">
                             </div>

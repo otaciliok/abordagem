@@ -6,9 +6,11 @@ from flask_migrate import Migrate
 from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
 from flask_wtf.file import FileField, FileAllowed
-from wtforms import StringField, DateField, TextAreaField, SubmitField
-from wtforms.validators import DataRequired, Optional, Length, ValidationError
+from wtforms import StringField, DateField, TextAreaField, SubmitField, PasswordField, SelectField, BooleanField
+from wtforms.validators import DataRequired, Optional, Length, ValidationError, Email
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 import re
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
@@ -18,6 +20,7 @@ from reportlab.lib.units import inch
 import io
 import tempfile
 from dotenv import load_dotenv
+from functools import wraps
 
 # Carregar variáveis de ambiente
 load_dotenv()
@@ -32,12 +35,63 @@ app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg'}
 app.config['WTF_CSRF_ENABLED'] = True
 
 csrf = CSRFProtect(app)
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+login_manager.login_message = 'Por favor, faça login para acessar esta página.'
 
 # Garantir que a pasta de uploads existe
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+
+class User(UserMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128))
+    nome = db.Column(db.String(100), nullable=False)
+    cargo = db.Column(db.String(100), nullable=False)
+    is_admin = db.Column(db.Boolean, default=False)
+    is_active = db.Column(db.Boolean, default=True)
+    data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
+    ultimo_acesso = db.Column(db.DateTime)
+    nivel_acesso = db.Column(db.String(20), default='usuario')  # 'admin', 'supervisor', 'usuario'
+    
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+@login_manager.user_loader
+def load_user(id):
+    return User.query.get(int(id))
+
+class LoginForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    password = PasswordField('Senha', validators=[DataRequired()])
+    submit = SubmitField('Entrar')
+
+class RegistrationForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    password = PasswordField('Senha', validators=[DataRequired()])
+    nome = StringField('Nome Completo', validators=[DataRequired()])
+    cargo = StringField('Cargo', validators=[DataRequired()])
+    submit = SubmitField('Registrar')
+
+class UserForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    nome = StringField('Nome Completo', validators=[DataRequired()])
+    cargo = StringField('Cargo', validators=[DataRequired()])
+    password = PasswordField('Senha', validators=[Optional()])
+    nivel_acesso = SelectField('Nível de Acesso', 
+                              choices=[('usuario', 'Usuário'), 
+                                     ('supervisor', 'Supervisor'), 
+                                     ('admin', 'Administrador')],
+                              validators=[DataRequired()])
+    is_active = BooleanField('Conta Ativa')
+    submit = SubmitField('Salvar')
 
 # Modelo para a tabela de abordagens
 class Abordagem(db.Model):
@@ -127,6 +181,7 @@ def save_image(file, prefix=''):
     return None
 
 @app.route('/')
+@login_required
 def index():
     page = request.args.get('page', 1, type=int)
     per_page = 10
@@ -167,6 +222,7 @@ def index():
     return render_template('index.html', abordagens=abordagens, pagination=pagination)
 
 @app.route('/nova', methods=['GET', 'POST'])
+@login_required
 def nova_abordagem():
     form = AbordagemForm()
     if form.validate_on_submit():
@@ -193,7 +249,18 @@ def nova_abordagem():
     
     return render_template('nova_abordagem.html', form=form)
 
+def supervisor_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or current_user.nivel_acesso == 'usuario':
+            flash('Acesso negado. Apenas supervisores e administradores podem realizar esta ação.', 'error')
+            return redirect(url_for('index'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 @app.route('/editar/<int:id>', methods=['GET', 'POST'])
+@login_required
+@supervisor_required
 def editar_abordagem(id):
     abordagem = Abordagem.query.get_or_404(id)
     form = AbordagemForm(obj=abordagem)
@@ -254,11 +321,14 @@ def editar_abordagem(id):
     return render_template('editar_abordagem.html', form=form, abordagem=abordagem)
 
 @app.route('/visualizar/<int:id>')
+@login_required
 def visualizar_abordagem(id):
     abordagem = Abordagem.query.get_or_404(id)
     return render_template('visualizar_abordagem.html', abordagem=abordagem)
 
 @app.route('/excluir/<int:id>', methods=['POST'])
+@login_required
+@supervisor_required
 def excluir_abordagem(id):
     abordagem = Abordagem.query.get_or_404(id)
     
@@ -484,7 +554,142 @@ def gerar_relatorio():
     
     return render_template('gerar_relatorio.html')
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user and user.check_password(form.password.data):
+            login_user(user)
+            next_page = request.args.get('next')
+            return redirect(next_page) if next_page else redirect(url_for('index'))
+        flash('Email ou senha inválidos', 'error')
+    return render_template('login.html', form=form)
+
+@app.route('/registro', methods=['GET', 'POST'])
+def registro():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        if User.query.filter_by(email=form.email.data).first():
+            flash('Este email já está registrado', 'error')
+            return render_template('registro.html', form=form)
+        
+        user = User(
+            email=form.email.data,
+            nome=form.nome.data,
+            cargo=form.cargo.data
+        )
+        user.set_password(form.password.data)
+        
+        # O primeiro usuário registrado será um admin
+        if User.query.count() == 0:
+            user.is_admin = True
+        
+        db.session.add(user)
+        db.session.commit()
+        
+        flash('Registro realizado com sucesso! Agora você pode fazer login.', 'success')
+        return redirect(url_for('login'))
+    
+    return render_template('registro.html', form=form)
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or not current_user.is_admin:
+            flash('Acesso negado. Apenas administradores podem acessar esta página.', 'error')
+            return redirect(url_for('index'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+@app.route('/admin/usuarios')
+@login_required
+@admin_required
+def listar_usuarios():
+    usuarios = User.query.order_by(User.nome).all()
+    return render_template('admin/usuarios.html', usuarios=usuarios)
+
+@app.route('/admin/usuarios/novo', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def novo_usuario():
+    form = UserForm()
+    if form.validate_on_submit():
+        if User.query.filter_by(email=form.email.data).first():
+            flash('Este email já está registrado.', 'error')
+            return render_template('admin/usuario_form.html', form=form, titulo='Novo Usuário')
+        
+        user = User(
+            email=form.email.data,
+            nome=form.nome.data,
+            cargo=form.cargo.data,
+            nivel_acesso=form.nivel_acesso.data,
+            is_active=form.is_active.data
+        )
+        
+        if form.password.data:
+            user.set_password(form.password.data)
+        
+        db.session.add(user)
+        db.session.commit()
+        
+        flash('Usuário criado com sucesso!', 'success')
+        return redirect(url_for('listar_usuarios'))
+    
+    return render_template('admin/usuario_form.html', form=form, titulo='Novo Usuário')
+
+@app.route('/admin/usuarios/editar/<int:id>', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def editar_usuario(id):
+    user = User.query.get_or_404(id)
+    form = UserForm(obj=user)
+    
+    if form.validate_on_submit():
+        user.email = form.email.data
+        user.nome = form.nome.data
+        user.cargo = form.cargo.data
+        user.nivel_acesso = form.nivel_acesso.data
+        user.is_active = form.is_active.data
+        
+        if form.password.data:
+            user.set_password(form.password.data)
+        
+        db.session.commit()
+        flash('Usuário atualizado com sucesso!', 'success')
+        return redirect(url_for('listar_usuarios'))
+    
+    return render_template('admin/usuario_form.html', form=form, titulo='Editar Usuário')
+
+@app.route('/admin/usuarios/excluir/<int:id>', methods=['POST'])
+@login_required
+@admin_required
+def excluir_usuario(id):
+    user = User.query.get_or_404(id)
+    
+    if user.id == current_user.id:
+        flash('Você não pode excluir sua própria conta.', 'error')
+        return redirect(url_for('listar_usuarios'))
+    
+    db.session.delete(user)
+    db.session.commit()
+    
+    flash('Usuário excluído com sucesso!', 'success')
+    return redirect(url_for('listar_usuarios'))
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug=True, host='127.0.0.1', port=8080) 
+    app.run(debug=True, host='127.0.0.1', port=8080, threaded=True) 
