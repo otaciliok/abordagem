@@ -65,7 +65,13 @@ login_manager.login_message = 'Por favor, faça login para acessar esta página.
 
 # Criar todas as tabelas do banco de dados
 with app.app_context():
-    db.create_all()
+    try:
+        db.create_all()
+        # Executar migrações
+        from flask_migrate import upgrade as _upgrade
+        _upgrade()
+    except Exception as e:
+        print(f"Erro ao criar tabelas: {e}")
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
