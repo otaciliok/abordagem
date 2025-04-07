@@ -596,30 +596,30 @@ def login():
 
 @app.route('/registro', methods=['GET', 'POST'])
 def registro():
-    if current_user.is_authenticated:
-        return redirect(url_for('index'))
-    
     form = RegistrationForm()
     if form.validate_on_submit():
         if User.query.filter_by(email=form.email.data).first():
-            flash('Este email já está registrado', 'error')
+            flash('Email já cadastrado. Por favor, use outro email.', 'danger')
             return render_template('registro.html', form=form)
+        
+        # Verifica se é o primeiro usuário
+        primeiro_usuario = User.query.first() is None
         
         user = User(
             email=form.email.data,
             nome=form.nome.data,
-            cargo=form.cargo.data
+            cargo=form.cargo.data,
+            is_admin=primeiro_usuario,  # Define como admin se for o primeiro usuário
+            is_active=True,
+            data_criacao=datetime.utcnow(),
+            nivel_acesso='admin' if primeiro_usuario else 'usuario'
         )
         user.set_password(form.password.data)
-        
-        # O primeiro usuário registrado será um admin
-        if User.query.count() == 0:
-            user.is_admin = True
         
         db.session.add(user)
         db.session.commit()
         
-        flash('Registro realizado com sucesso! Agora você pode fazer login.', 'success')
+        flash('Cadastro realizado com sucesso!', 'success')
         return redirect(url_for('login'))
     
     return render_template('registro.html', form=form)
@@ -712,6 +712,50 @@ def excluir_usuario(id):
     db.session.commit()
     
     flash('Usuário excluído com sucesso!', 'success')
+    return redirect(url_for('listar_usuarios'))
+
+@app.route('/usuarios')
+@login_required
+def listar_usuarios():
+    if not current_user.is_admin:
+        flash('Acesso negado. Você precisa ser administrador.', 'danger')
+        return redirect(url_for('index'))
+    
+    usuarios = User.query.all()
+    return render_template('usuarios.html', usuarios=usuarios)
+
+@app.route('/usuario/<int:id>/promover', methods=['POST'])
+@login_required
+def promover_usuario(id):
+    if not current_user.is_admin:
+        flash('Acesso negado. Você precisa ser administrador.', 'danger')
+        return redirect(url_for('index'))
+    
+    usuario = User.query.get_or_404(id)
+    usuario.is_admin = True
+    usuario.nivel_acesso = 'admin'
+    db.session.commit()
+    
+    flash(f'Usuário {usuario.nome} promovido a administrador.', 'success')
+    return redirect(url_for('listar_usuarios'))
+
+@app.route('/usuario/<int:id>/rebaixar', methods=['POST'])
+@login_required
+def rebaixar_usuario(id):
+    if not current_user.is_admin:
+        flash('Acesso negado. Você precisa ser administrador.', 'danger')
+        return redirect(url_for('index'))
+    
+    if current_user.id == id:
+        flash('Você não pode rebaixar seu próprio usuário.', 'danger')
+        return redirect(url_for('listar_usuarios'))
+    
+    usuario = User.query.get_or_404(id)
+    usuario.is_admin = False
+    usuario.nivel_acesso = 'usuario'
+    db.session.commit()
+    
+    flash(f'Usuário {usuario.nome} rebaixado para usuário comum.', 'success')
     return redirect(url_for('listar_usuarios'))
 
 if __name__ == '__main__':

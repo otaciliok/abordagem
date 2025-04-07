@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Gerenciamento de Usuários</h2>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Email</th>
+                    <th>Cargo</th>
+                    <th>Nível de Acesso</th>
+                    <th>Data de Criação</th>
+                    <th>Último Acesso</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for usuario in usuarios %}
+                <tr>
+                    <td>{{ usuario.nome }}</td>
+                    <td>{{ usuario.email }}</td>
+                    <td>{{ usuario.cargo }}</td>
+                    <td>
+                        {% if usuario.is_admin %}
+                            <span class="badge bg-primary">Administrador</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Usuário</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ usuario.data_criacao.strftime('%d/%m/%Y %H:%M') if usuario.data_criacao else 'N/A' }}</td>
+                    <td>{{ usuario.ultimo_acesso.strftime('%d/%m/%Y %H:%M') if usuario.ultimo_acesso else 'N/A' }}</td>
+                    <td>
+                        {% if not usuario.is_admin %}
+                        <form action="{{ url_for('promover_usuario', id=usuario.id) }}" method="post" style="display: inline;">
+                            <button type="submit" class="btn btn-success btn-sm">Promover a Admin</button>
+                        </form>
+                        {% else %}
+                        <form action="{{ url_for('rebaixar_usuario', id=usuario.id) }}" method="post" style="display: inline;">
+                            <button type="submit" class="btn btn-warning btn-sm" {% if usuario.id == current_user.id %}disabled{% endif %}>
+                                Rebaixar para Usuário
+                            </button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %} 
