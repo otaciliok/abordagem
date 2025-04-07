@@ -97,7 +97,14 @@ with app.app_context():
         admin_email = "otaciliolobo@gmail.com"
         admin = User.query.filter_by(email=admin_email).first()
         
-        if not admin:
+        if admin:
+            # Atualizar usuário existente para administrador
+            admin.is_admin = True
+            admin.nivel_acesso = 'admin'
+            db.session.commit()
+            print("Usuário atualizado para administrador com sucesso!")
+        else:
+            # Criar novo usuário administrador
             admin = User(
                 email=admin_email,
                 nome="Otacilio Lobo",
@@ -112,7 +119,7 @@ with app.app_context():
             db.session.commit()
             print("Usuário administrador criado com sucesso!")
     except Exception as e:
-        print(f"Erro ao criar usuário administrador: {e}")
+        print(f"Erro ao atualizar/criar usuário administrador: {e}")
 
 @login_manager.user_loader
 def load_user(id):
