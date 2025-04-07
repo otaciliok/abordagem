@@ -8,4 +8,16 @@ services:
       - key: PYTHON_VERSION
         value: 3.9.0
       - key: SECRET_KEY
-        generateValue: true 
+        generateValue: true
+      - key: FLASK_APP
+        value: app.py
+      - key: FLASK_ENV
+        value: production
+      - key: RENDER
+        value: true
+      - key: DATABASE_URL
+        value: postgresql://sistema_abordagens_db_user:W87FB2SCGBgDh1Ct6VjlCLNyGPrR4UGm@dpg-cvpv29muk2gs73e9d7ig-a/sistema_abordagens_db
+    disk:
+      name: uploads
+      mountPath: /opt/render/project/src/static/uploads
+      sizeGB: 1 
