@@ -25,16 +25,24 @@ from functools import wraps
 # Carregar variáveis de ambiente
 load_dotenv()
 
+# Inicialização do SQLAlchemy antes do app
+db = SQLAlchemy()
+
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'sua_chave_secreta_aqui')
 
 # Configuração do banco de dados
 database_url = os.getenv('DATABASE_URL')
 if database_url and database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
-app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///abordagens.db'
 
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config.update(
+    SECRET_KEY=os.getenv('SECRET_KEY', 'uma-chave-secreta-padrao'),
+    SQLALCHEMY_DATABASE_URI=database_url or 'sqlite:///abordagens.db',
+    SQLALCHEMY_TRACK_MODIFICATIONS=False,
+    MAX_CONTENT_LENGTH=16 * 1024 * 1024,  # 16MB max-limit
+    ALLOWED_EXTENSIONS={'png', 'jpg', 'jpeg', 'gif'},
+    WTF_CSRF_ENABLED=True
+)
 
 # Configuração da pasta de uploads para o Render
 if os.getenv('RENDER'):
@@ -42,21 +50,18 @@ if os.getenv('RENDER'):
 else:
     app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads')
 
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max-limit
-app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg'}
-app.config['WTF_CSRF_ENABLED'] = True
+# Garantir que a pasta de uploads existe
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+# Inicialização das extensões
 csrf = CSRFProtect(app)
+db.init_app(app)
+migrate = Migrate(app, db)
+
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 login_manager.login_message = 'Por favor, faça login para acessar esta página.'
-
-# Garantir que a pasta de uploads existe
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
 
 # Criar todas as tabelas do banco de dados
 with app.app_context():
