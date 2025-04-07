@@ -23,7 +23,8 @@
     <div class="card-body">
         <form method="POST" enctype="multipart/form-data">
             {{ form.csrf_token }}
-            <div class="row">
+            
+            <div class="row mb-3">
                 <div class="col-md-6">
                     <div class="form-group">
                         {{ form.nome_completo.label(class="form-label") }}
@@ -52,7 +53,7 @@
                 </div>
             </div>
 
-            <div class="row">
+            <div class="row mb-3">
                 <div class="col-md-6">
                     <div class="form-group">
                         {{ form.vulgo.label(class="form-label") }}
@@ -81,11 +82,11 @@
                 </div>
             </div>
 
-            <div class="row">
-                <div class="col-md-6 mb-3">
+            <div class="row mb-3">
+                <div class="col-md-6">
                     <div class="form-group">
                         {{ form.data_nascimento.label(class="form-label") }}
-                        {{ form.data_nascimento(class="form-control" + (" is-invalid" if form.data_nascimento.errors else ""), type="date") }}
+                        {{ form.data_nascimento(class="form-control" + (" is-invalid" if form.data_nascimento.errors else "")) }}
                         {% if form.data_nascimento.errors %}
                             <div class="invalid-feedback">
                                 {% for error in form.data_nascimento.errors %}
@@ -95,10 +96,31 @@
                         {% endif %}
                     </div>
                 </div>
-                <div class="col-md-6 mb-3">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form.endereco_residencia.label(class="form-label") }}
+                        {{ form.endereco_residencia(class="form-control" + (" is-invalid" if form.endereco_residencia.errors else "")) }}
+                        {% if form.endereco_residencia.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.endereco_residencia.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
                     <div class="form-group">
                         {{ form.endereco_abordagem.label(class="form-label") }}
-                        {{ form.endereco_abordagem(class="form-control" + (" is-invalid" if form.endereco_abordagem.errors else "")) }}
+                        <div class="input-group">
+                            {{ form.endereco_abordagem(class="form-control" + (" is-invalid" if form.endereco_abordagem.errors else ""), id="endereco_abordagem") }}
+                            <button type="button" class="btn btn-outline-secondary" id="capturar_localizacao">
+                                <i class="fas fa-map-marker-alt"></i> Localização Atual
+                            </button>
+                        </div>
                         {% if form.endereco_abordagem.errors %}
                             <div class="invalid-feedback">
                                 {% for error in form.endereco_abordagem.errors %}
@@ -108,100 +130,97 @@
                         {% endif %}
                     </div>
                 </div>
-            </div>
-
-            <div class="mb-3">
-                <div class="form-group">
-                    {{ form.observacoes.label(class="form-label") }}
-                    {{ form.observacoes(class="form-control" + (" is-invalid" if form.observacoes.errors else ""), rows="4") }}
-                    {% if form.observacoes.errors %}
-                        <div class="invalid-feedback">
-                            {% for error in form.observacoes.errors %}
-                                {{ error }}
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <div class="mb-3">
-                <div class="form-group">
-                    {{ form.imagem.label(class="form-label") }}
-                    {{ form.imagem(class="form-control" + (" is-invalid" if form.imagem.errors else "")) }}
-                    {% if form.imagem.errors %}
-                        <div class="invalid-feedback">
-                            {% for error in form.imagem.errors %}
-                                {{ error }}
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                    {% if abordagem.imagem %}
-                        <div class="mt-2">
-                            <img src="{{ url_for('uploaded_file', filename=abordagem.imagem) }}" alt="Imagem atual" class="img-thumbnail" style="max-height: 200px;">
-                        </div>
-                    {% endif %}
-                    <div id="imagePreview" class="mt-2" style="display: none;">
-                        <img src="" alt="Preview" class="img-thumbnail" style="max-height: 200px;">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form.observacoes.label(class="form-label") }}
+                        {{ form.observacoes(class="form-control" + (" is-invalid" if form.observacoes.errors else ""), rows="4") }}
+                        {% if form.observacoes.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.observacoes.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
 
-            <div class="mb-3">
-                <div class="form-group">
-                    {{ form.historico_pca.label(class="form-label") }}
-                    {{ form.historico_pca(class="form-control" + (" is-invalid" if form.historico_pca.errors else "")) }}
-                    {% if form.historico_pca.errors %}
-                        <div class="invalid-feedback">
-                            {% for error in form.historico_pca.errors %}
-                                {{ error }}
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                    {% if abordagem.historico_pca %}
-                        <div class="mt-2">
-                            <img src="{{ url_for('uploaded_file', filename=abordagem.historico_pca) }}" alt="Histórico PCA atual" class="img-thumbnail" style="max-height: 200px;">
-                        </div>
-                    {% endif %}
-                    <div id="historicoPreview" class="mt-2" style="display: none;">
-                        <img src="" alt="Preview" class="img-thumbnail" style="max-height: 200px;">
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <div class="form-check form-switch">
+                        {{ form.alerta(class="form-check-input") }}
+                        <label class="form-check-label" for="alerta">Indivíduo requer atenção especial</label>
                     </div>
                 </div>
             </div>
 
-            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                <a href="{{ url_for('visualizar_abordagem', id=abordagem.id) }}" class="btn btn-secondary me-md-2">
-                    <i class="fas fa-times me-1"></i>Cancelar
-                </a>
-                {{ form.submit(class="btn btn-primary") }}
+            <div class="form-group">
+                {{ form.imagem.label(class="form-label") }}
+                {{ form.imagem(class="form-control" + (" is-invalid" if form.imagem.errors else "")) }}
+                {% if form.imagem.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.imagem.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                {% if abordagem.imagem %}
+                    <img src="{{ url_for('static', filename='uploads/' + abordagem.imagem) }}" class="preview-image mt-2" alt="Imagem atual">
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                {{ form.historico_pca.label(class="form-label") }}
+                {{ form.historico_pca(class="form-control" + (" is-invalid" if form.historico_pca.errors else "")) }}
+                {% if form.historico_pca.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.historico_pca.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                {% if abordagem.historico_pca %}
+                    <img src="{{ url_for('static', filename='uploads/' + abordagem.historico_pca) }}" class="preview-image mt-2" alt="Histórico PCA atual">
+                {% endif %}
+            </div>
+
+            <div class="form-group mt-4">
+                <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-primary">Salvar</button>
             </div>
         </form>
     </div>
 </div>
 
 <script>
-    function previewImage(input, previewId) {
-        var preview = document.getElementById(previewId);
-        var previewImg = preview.querySelector('img');
-        var file = input.files[0];
-        
-        if (file) {
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                previewImg.src = e.target.result;
-                preview.style.display = 'block';
-            }
-            reader.readAsDataURL(file);
-        } else {
-            preview.style.display = 'none';
-        }
+// Função para capturar a localização atual
+document.getElementById('capturar_localizacao').addEventListener('click', function() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            
+            // Usar a API de geocodificação reversa para obter o endereço
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.display_name) {
+                        document.getElementById('endereco_abordagem').value = data.display_name;
+                    } else {
+                        document.getElementById('endereco_abordagem').value = `${latitude}, ${longitude}`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao obter endereço:', error);
+                    document.getElementById('endereco_abordagem').value = `${latitude}, ${longitude}`;
+                });
+        }, function(error) {
+            console.error('Erro ao obter localização:', error);
+            alert('Não foi possível obter sua localização. Verifique se o GPS está ativado e se você permitiu o acesso à localização.');
+        });
+    } else {
+        alert('Seu navegador não suporta geolocalização.');
     }
-
-    document.getElementById('imagem').addEventListener('change', function(e) {
-        previewImage(this, 'imagePreview');
-    });
-
-    document.getElementById('historico_pca').addEventListener('change', function(e) {
-        previewImage(this, 'historicoPreview');
-    });
+});
 </script>
 {% endblock %} 

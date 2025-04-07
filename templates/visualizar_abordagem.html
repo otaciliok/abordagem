@@ -34,6 +34,11 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h2 class="mb-0">Detalhes da Abordagem</h2>
                 <div>
+                    {% if abordagem.alerta %}
+                    <span class="badge bg-danger me-2">
+                        <i class="fas fa-exclamation-triangle"></i> Sinal de Alerta
+                    </span>
+                    {% endif %}
                     {% if current_user.nivel_acesso != 'usuario' %}
                     <a href="{{ url_for('editar_abordagem', id=abordagem.id) }}" class="btn btn-primary">Editar</a>
                     <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
@@ -78,12 +83,26 @@
                             <div class="detail-label">Data e Hora da Abordagem</div>
                             <div class="detail-value">{{ abordagem.data_hora.strftime('%d/%m/%Y %H:%M') }}</div>
                         </div>
-                        
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="detail-group">
+                            <div class="detail-label">Endereço da Residência</div>
+                            <div class="detail-value">{{ abordagem.endereco_residencia or 'Não informado' }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
                         <div class="detail-group">
                             <div class="detail-label">Endereço da Abordagem</div>
                             <div class="detail-value">{{ abordagem.endereco_abordagem }}</div>
                         </div>
-                        
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-12">
                         <div class="detail-group">
                             <div class="detail-label">Observações</div>
                             <div class="detail-value">{{ abordagem.observacoes or 'Nenhuma observação registrada' }}</div>

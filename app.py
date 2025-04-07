@@ -26,8 +26,8 @@ from functools import wraps
 load_dotenv()
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'sua_chave_secreta_aqui'  # Altere para uma chave secreta segura
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///abordagens.db'
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'sua_chave_secreta_aqui')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///abordagens.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max-limit
@@ -102,10 +102,12 @@ class Abordagem(db.Model):
     cpf = db.Column(db.String(14))
     data_nascimento = db.Column(db.Date)
     endereco_abordagem = db.Column(db.String(200), nullable=False)
+    endereco_residencia = db.Column(db.String(200))
     data_hora = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     observacoes = db.Column(db.Text)
     imagem = db.Column(db.String(255))
     historico_pca = db.Column(db.String(255))
+    alerta = db.Column(db.Boolean, nullable=False, default=False)
     
     def __repr__(self):
         return f'<Abordagem {self.nome_completo}>'
@@ -118,7 +120,9 @@ class AbordagemForm(FlaskForm):
     cpf = StringField('CPF', validators=[Optional(), Length(max=14)])
     data_nascimento = DateField('Data de Nascimento', validators=[Optional()])
     endereco_abordagem = StringField('Endereço da Abordagem', validators=[DataRequired(), Length(max=200)])
+    endereco_residencia = StringField('Endereço da Residência', validators=[Optional(), Length(max=200)])
     observacoes = TextAreaField('Observações', validators=[Optional()])
+    alerta = BooleanField('Sinal de Alerta', description='Marque se este indivíduo requer atenção especial')
     imagem = FileField('Imagem', validators=[
         Optional(),
         FileAllowed(['jpg', 'jpeg', 'png'], 'Apenas imagens são permitidas!')
@@ -236,6 +240,7 @@ def nova_abordagem():
             cpf=form.cpf.data,
             data_nascimento=form.data_nascimento.data,
             endereco_abordagem=form.endereco_abordagem.data,
+            endereco_residencia=form.endereco_residencia.data,
             observacoes=form.observacoes.data,
             imagem=imagem_filename,
             historico_pca=historico_pca_filename
@@ -273,7 +278,9 @@ def editar_abordagem(id):
         cpf = form.cpf.data
         data_nascimento = form.data_nascimento.data
         endereco_abordagem = form.endereco_abordagem.data
+        endereco_residencia = form.endereco_residencia.data
         observacoes = form.observacoes.data
+        alerta = form.alerta.data
         
         # Processa a imagem apenas se uma nova for enviada
         if form.imagem.data and hasattr(form.imagem.data, 'filename') and form.imagem.data.filename:
@@ -303,14 +310,16 @@ def editar_abordagem(id):
             # Mantém o histórico do PCA existente
             historico_pca_filename = abordagem.historico_pca
         
-        # Atualiza a abordagem com os novos valores
+        # Atualiza os campos da abordagem
         abordagem.nome_completo = nome_completo
         abordagem.nome_mae = nome_mae
         abordagem.vulgo = vulgo
         abordagem.cpf = cpf
         abordagem.data_nascimento = data_nascimento
         abordagem.endereco_abordagem = endereco_abordagem
+        abordagem.endereco_residencia = endereco_residencia
         abordagem.observacoes = observacoes
+        abordagem.alerta = alerta
         abordagem.imagem = imagem_filename
         abordagem.historico_pca = historico_pca_filename
         
@@ -415,7 +424,7 @@ def gerar_relatorio():
         if tipo_relatorio == 'simples':
             # Relatório simples - apenas tabela com dados básicos
             # Cabeçalho da tabela
-            data = [['Nome Completo', 'Nome da Mãe', 'Vulgo', 'CPF', 'Data/Hora', 'Endereço']]
+            data = [['Nome Completo', 'Nome da Mãe', 'Vulgo', 'CPF', 'Data/Hora', 'Endereço Residência', 'Endereço Abordagem']]
             
             # Dados da tabela
             for abordagem in abordagens:
@@ -425,11 +434,12 @@ def gerar_relatorio():
                     abordagem.vulgo or '-',
                     abordagem.cpf or '-',
                     abordagem.data_hora.strftime('%d/%m/%Y %H:%M'),
+                    abordagem.endereco_residencia or '-',
                     abordagem.endereco_abordagem
                 ])
             
             # Criar e estilizar a tabela
-            table = Table(data, colWidths=[1.2*inch, 1.2*inch, 0.8*inch, 0.8*inch, 1*inch, 1.5*inch])
+            table = Table(data, colWidths=[1.2*inch, 1.2*inch, 0.8*inch, 0.8*inch, 1*inch, 1.5*inch, 1.5*inch])
             table.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
@@ -463,6 +473,14 @@ def gerar_relatorio():
                 )
                 elements.append(Paragraph(f"Abordagem: {abordagem.nome_completo}", abordagem_title))
                 
+                # Imagem principal (agora logo após o nome)
+                if abordagem.imagem:
+                    img_path = os.path.join(app.config['UPLOAD_FOLDER'], abordagem.imagem)
+                    if os.path.exists(img_path):
+                        elements.append(Spacer(1, 5))
+                        elements.append(Image(img_path, width=3*inch, height=3*inch))
+                        elements.append(Spacer(1, 10))
+                
                 # Informações básicas em uma tabela
                 info_data = [
                     ['Nome Completo:', abordagem.nome_completo],
@@ -470,11 +488,15 @@ def gerar_relatorio():
                     ['Vulgo:', abordagem.vulgo or '-'],
                     ['CPF:', abordagem.cpf or '-'],
                     ['Data/Hora:', abordagem.data_hora.strftime('%d/%m/%Y %H:%M')],
-                    ['Endereço:', abordagem.endereco_abordagem]
+                    ['Endereço da Residência:', abordagem.endereco_residencia or '-'],
+                    ['Endereço da Abordagem:', abordagem.endereco_abordagem]
                 ]
                 
                 if abordagem.data_nascimento:
                     info_data.append(['Data de Nascimento:', abordagem.data_nascimento.strftime('%d/%m/%Y')])
+                
+                if abordagem.alerta:
+                    info_data.append(['Sinal de Alerta:', 'Sim'])
                 
                 info_table = Table(info_data, colWidths=[1.5*inch, 4*inch])
                 info_table.setStyle(TableStyle([
@@ -493,43 +515,19 @@ def gerar_relatorio():
                     elements.append(Paragraph("Observações:", styles['Heading3']))
                     elements.append(Paragraph(abordagem.observacoes, styles['Normal']))
                 
-                # Imagens
-                elements.append(Spacer(1, 10))
-                elements.append(Paragraph("Imagens:", styles['Heading3']))
-                
-                # Criar uma tabela para as imagens
-                img_data = []
-                
-                # Imagem principal
-                if abordagem.imagem:
-                    img_path = os.path.join(app.config['UPLOAD_FOLDER'], abordagem.imagem)
-                    if os.path.exists(img_path):
-                        img_data.append(['Imagem Principal:', Image(img_path, width=2*inch, height=2*inch)])
-                    else:
-                        img_data.append(['Imagem Principal:', 'Imagem não encontrada'])
-                else:
-                    img_data.append(['Imagem Principal:', 'Não disponível'])
-                
                 # Imagem do histórico do PCA
                 if abordagem.historico_pca:
+                    elements.append(Spacer(1, 10))
+                    elements.append(Paragraph("Histórico do PCA:", styles['Heading3']))
                     pca_path = os.path.join(app.config['UPLOAD_FOLDER'], abordagem.historico_pca)
                     if os.path.exists(pca_path):
-                        img_data.append(['Histórico do PCA:', Image(pca_path, width=2*inch, height=2*inch)])
+                        elements.append(Image(pca_path, width=3*inch, height=3*inch))
                     else:
-                        img_data.append(['Histórico do PCA:', 'Imagem não encontrada'])
+                        elements.append(Paragraph("Imagem não encontrada", styles['Normal']))
                 else:
-                    img_data.append(['Histórico do PCA:', 'Não disponível'])
-                
-                img_table = Table(img_data, colWidths=[1.5*inch, 4*inch])
-                img_table.setStyle(TableStyle([
-                    ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
-                    ('ALIGN', (1, 0), (1, -1), 'LEFT'),
-                    ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-                    ('FONTSIZE', (0, 0), (-1, -1), 10),
-                    ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-                ]))
-                
-                elements.append(img_table)
+                    elements.append(Spacer(1, 10))
+                    elements.append(Paragraph("Histórico do PCA:", styles['Heading3']))
+                    elements.append(Paragraph("Não disponível", styles['Normal']))
                 
                 # Adiciona uma linha divisória
                 elements.append(Paragraph("<hr/>", styles['Normal']))
@@ -692,4 +690,4 @@ def excluir_usuario(id):
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug=True, host='127.0.0.1', port=8080, threaded=True) 
+    app.run(debug=True, host='0.0.0.0', port=8080, threaded=True) 

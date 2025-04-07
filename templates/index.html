@@ -80,41 +80,40 @@
                                     <th>Vulgo</th>
                                     <th>CPF</th>
                                     <th>Data Nasc.</th>
-                                    <th>Endereço</th>
-                                    <th>Hist. PCA</th>
+                                    <th>Alerta</th>
                                     <th>Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for abordagem in abordagens %}
-                                <tr>
+                                <tr {% if abordagem.alerta %}class="table-danger"{% endif %}>
                                     <td>{{ abordagem.data_hora.strftime('%d/%m/%Y %H:%M') }}</td>
                                     <td>{{ abordagem.nome_completo }}</td>
                                     <td>{{ abordagem.nome_mae }}</td>
                                     <td>{{ abordagem.vulgo or '-' }}</td>
                                     <td>{{ abordagem.cpf or '-' }}</td>
                                     <td>{{ abordagem.data_nascimento.strftime('%d/%m/%Y') if abordagem.data_nascimento else '-' }}</td>
-                                    <td>{{ abordagem.endereco_abordagem }}</td>
                                     <td>
-                                        {% if abordagem.historico_pca %}
-                                            <i class="fas fa-check text-success" title="Histórico do PCA disponível"></i>
+                                        {% if abordagem.alerta %}
+                                            <i class="fas fa-exclamation-triangle text-danger" title="Indivíduo requer atenção especial"></i>
                                         {% else %}
-                                            <i class="fas fa-times text-danger" title="Sem histórico do PCA"></i>
+                                            <i class="fas fa-check text-success" title="Sem alertas"></i>
                                         {% endif %}
                                     </td>
-                                    <td class="action-buttons">
-                                        <a href="{{ url_for('visualizar_abordagem', id=abordagem.id) }}" class="btn btn-info btn-sm" title="Visualizar">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        {% if current_user.nivel_acesso != 'usuario' %}
-                                        <a href="{{ url_for('editar_abordagem', id=abordagem.id) }}" class="btn btn-warning btn-sm" title="Editar">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <button type="button" class="btn btn-danger btn-sm" title="Excluir" 
-                                                data-bs-toggle="modal" data-bs-target="#deleteModal{{ abordagem.id }}">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                        {% endif %}
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('visualizar_abordagem', id=abordagem.id) }}" class="btn btn-info btn-sm" title="Visualizar">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if current_user.nivel_acesso != 'usuario' %}
+                                            <a href="{{ url_for('editar_abordagem', id=abordagem.id) }}" class="btn btn-warning btn-sm" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-danger btn-sm" title="Excluir" data-bs-toggle="modal" data-bs-target="#deleteModal{{ abordagem.id }}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                            {% endif %}
+                                        </div>
                                     </td>
                                 </tr>
                                 {% endfor %}

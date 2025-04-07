@@ -27,7 +27,7 @@
                 <form method="POST" enctype="multipart/form-data">
                     {{ form.csrf_token }}
                     
-                    <div class="row">
+                    <div class="row mb-3">
                         <div class="col-md-6">
                             <div class="form-group">
                                 {{ form.nome_completo.label(class="form-label") }}
@@ -55,8 +55,8 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="row">
+
+                    <div class="row mb-3">
                         <div class="col-md-6">
                             <div class="form-group">
                                 {{ form.vulgo.label(class="form-label") }}
@@ -84,12 +84,12 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="row">
+
+                    <div class="row mb-3">
                         <div class="col-md-6">
                             <div class="form-group">
                                 {{ form.data_nascimento.label(class="form-label") }}
-                                {{ form.data_nascimento(class="form-control" + (" is-invalid" if form.data_nascimento.errors else ""), type="date") }}
+                                {{ form.data_nascimento(class="form-control" + (" is-invalid" if form.data_nascimento.errors else "")) }}
                                 {% if form.data_nascimento.errors %}
                                     <div class="invalid-feedback">
                                         {% for error in form.data_nascimento.errors %}
@@ -101,8 +101,29 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
+                                {{ form.endereco_residencia.label(class="form-label") }}
+                                {{ form.endereco_residencia(class="form-control" + (" is-invalid" if form.endereco_residencia.errors else "")) }}
+                                {% if form.endereco_residencia.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.endereco_residencia.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
                                 {{ form.endereco_abordagem.label(class="form-label") }}
-                                {{ form.endereco_abordagem(class="form-control" + (" is-invalid" if form.endereco_abordagem.errors else "")) }}
+                                <div class="input-group">
+                                    {{ form.endereco_abordagem(class="form-control" + (" is-invalid" if form.endereco_abordagem.errors else ""), id="endereco_abordagem") }}
+                                    <button type="button" class="btn btn-outline-secondary" id="capturar_localizacao">
+                                        <i class="fas fa-map-marker-alt"></i> Localização Atual
+                                    </button>
+                                </div>
                                 {% if form.endereco_abordagem.errors %}
                                     <div class="invalid-feedback">
                                         {% for error in form.endereco_abordagem.errors %}
@@ -112,53 +133,66 @@
                                 {% endif %}
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        {{ form.observacoes.label(class="form-label") }}
-                        {{ form.observacoes(class="form-control" + (" is-invalid" if form.observacoes.errors else ""), rows="4") }}
-                        {% if form.observacoes.errors %}
-                            <div class="invalid-feedback">
-                                {% for error in form.observacoes.errors %}
-                                    {{ error }}
-                                {% endfor %}
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.observacoes.label(class="form-label") }}
+                                {{ form.observacoes(class="form-control" + (" is-invalid" if form.observacoes.errors else ""), rows="3") }}
+                                {% if form.observacoes.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.observacoes.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
                             </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="form-group">
-                        {{ form.imagem.label(class="form-label") }}
-                        {{ form.imagem(class="form-control" + (" is-invalid" if form.imagem.errors else "")) }}
-                        {% if form.imagem.errors %}
-                            <div class="invalid-feedback">
-                                {% for error in form.imagem.errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                        <div id="imagePreview" class="mt-2" style="display: none;">
-                            <img src="" alt="Preview" class="img-thumbnail" style="max-height: 200px;">
                         </div>
                     </div>
-                    
-                    <div class="form-group">
-                        {{ form.historico_pca.label(class="form-label") }}
-                        {{ form.historico_pca(class="form-control" + (" is-invalid" if form.historico_pca.errors else "")) }}
-                        {% if form.historico_pca.errors %}
-                            <div class="invalid-feedback">
-                                {% for error in form.historico_pca.errors %}
-                                    {{ error }}
-                                {% endfor %}
+
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <div class="form-check form-switch">
+                                {{ form.alerta(class="form-check-input") }}
+                                <label class="form-check-label" for="alerta">Indivíduo requer atenção especial</label>
                             </div>
-                        {% endif %}
-                        <div id="historicoPreview" class="mt-2" style="display: none;">
-                            <img src="" alt="Preview" class="img-thumbnail" style="max-height: 200px;">
                         </div>
                     </div>
-                    
-                    <div class="form-group mt-4">
-                        <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancelar</a>
-                        {{ form.submit(class="btn btn-primary") }}
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.imagem.label(class="form-label") }}
+                                {{ form.imagem(class="form-control" + (" is-invalid" if form.imagem.errors else ""), onchange="previewImage(this, 'preview-image')") }}
+                                {% if form.imagem.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.imagem.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <img id="preview-image" class="preview-image mt-2" src="#" alt="Preview da imagem">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.historico_pca.label(class="form-label") }}
+                                {{ form.historico_pca(class="form-control" + (" is-invalid" if form.historico_pca.errors else ""), onchange="previewImage(this, 'preview-historico')") }}
+                                {% if form.historico_pca.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.historico_pca.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <img id="preview-historico" class="preview-image mt-2" src="#" alt="Preview do histórico">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <button type="submit" class="btn btn-primary">Salvar</button>
+                            <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancelar</a>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -168,29 +202,48 @@
 
 <script>
 function previewImage(input, previewId) {
-    const preview = document.getElementById(previewId);
-    const img = preview.querySelector('img');
-    
+    var preview = document.getElementById(previewId);
     if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        
+        var reader = new FileReader();
         reader.onload = function(e) {
-            img.src = e.target.result;
+            preview.src = e.target.result;
             preview.style.display = 'block';
         }
-        
         reader.readAsDataURL(input.files[0]);
     } else {
+        preview.src = '#';
         preview.style.display = 'none';
     }
 }
 
-document.querySelector('input[name="imagem"]').addEventListener('change', function() {
-    previewImage(this, 'imagePreview');
-});
-
-document.querySelector('input[name="historico_pca"]').addEventListener('change', function() {
-    previewImage(this, 'historicoPreview');
+// Função para capturar a localização atual
+document.getElementById('capturar_localizacao').addEventListener('click', function() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            
+            // Usar a API de geocodificação reversa para obter o endereço
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.display_name) {
+                        document.getElementById('endereco_abordagem').value = data.display_name;
+                    } else {
+                        document.getElementById('endereco_abordagem').value = `${latitude}, ${longitude}`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao obter endereço:', error);
+                    document.getElementById('endereco_abordagem').value = `${latitude}, ${longitude}`;
+                });
+        }, function(error) {
+            console.error('Erro ao obter localização:', error);
+            alert('Não foi possível obter sua localização. Verifique se o GPS está ativado e se você permitiu o acesso à localização.');
+        });
+    } else {
+        alert('Seu navegador não suporta geolocalização.');
+    }
 });
 </script>
 {% endblock %} 
