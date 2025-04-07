@@ -91,6 +91,29 @@ class User(UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+# Criar usuário administrador se não existir
+with app.app_context():
+    try:
+        admin_email = "otaciliolobo@gmail.com"
+        admin = User.query.filter_by(email=admin_email).first()
+        
+        if not admin:
+            admin = User(
+                email=admin_email,
+                nome="Otacilio Lobo",
+                cargo="Administrador",
+                is_admin=True,
+                is_active=True,
+                data_criacao=datetime.utcnow(),
+                nivel_acesso='admin'
+            )
+            admin.set_password("Mikuafxb153")
+            db.session.add(admin)
+            db.session.commit()
+            print("Usuário administrador criado com sucesso!")
+    except Exception as e:
+        print(f"Erro ao criar usuário administrador: {e}")
+
 @login_manager.user_loader
 def load_user(id):
     return User.query.get(int(id))
@@ -594,36 +617,6 @@ def login():
         flash('Email ou senha inválidos', 'error')
     return render_template('login.html', form=form)
 
-@app.route('/registro', methods=['GET', 'POST'])
-def registro():
-    form = RegistrationForm()
-    if form.validate_on_submit():
-        if User.query.filter_by(email=form.email.data).first():
-            flash('Email já cadastrado. Por favor, use outro email.', 'danger')
-            return render_template('registro.html', form=form)
-        
-        # Verifica se é o primeiro usuário
-        primeiro_usuario = User.query.first() is None
-        
-        user = User(
-            email=form.email.data,
-            nome=form.nome.data,
-            cargo=form.cargo.data,
-            is_admin=primeiro_usuario,  # Define como admin se for o primeiro usuário
-            is_active=True,
-            data_criacao=datetime.utcnow(),
-            nivel_acesso='admin' if primeiro_usuario else 'usuario'
-        )
-        user.set_password(form.password.data)
-        
-        db.session.add(user)
-        db.session.commit()
-        
-        flash('Cadastro realizado com sucesso!', 'success')
-        return redirect(url_for('login'))
-    
-    return render_template('registro.html', form=form)
-
 @app.route('/logout')
 @login_required
 def logout():
@@ -712,50 +705,6 @@ def excluir_usuario(id):
     db.session.commit()
     
     flash('Usuário excluído com sucesso!', 'success')
-    return redirect(url_for('listar_usuarios'))
-
-@app.route('/usuarios')
-@login_required
-def listar_usuarios():
-    if not current_user.is_admin:
-        flash('Acesso negado. Você precisa ser administrador.', 'danger')
-        return redirect(url_for('index'))
-    
-    usuarios = User.query.all()
-    return render_template('usuarios.html', usuarios=usuarios)
-
-@app.route('/usuario/<int:id>/promover', methods=['POST'])
-@login_required
-def promover_usuario(id):
-    if not current_user.is_admin:
-        flash('Acesso negado. Você precisa ser administrador.', 'danger')
-        return redirect(url_for('index'))
-    
-    usuario = User.query.get_or_404(id)
-    usuario.is_admin = True
-    usuario.nivel_acesso = 'admin'
-    db.session.commit()
-    
-    flash(f'Usuário {usuario.nome} promovido a administrador.', 'success')
-    return redirect(url_for('listar_usuarios'))
-
-@app.route('/usuario/<int:id>/rebaixar', methods=['POST'])
-@login_required
-def rebaixar_usuario(id):
-    if not current_user.is_admin:
-        flash('Acesso negado. Você precisa ser administrador.', 'danger')
-        return redirect(url_for('index'))
-    
-    if current_user.id == id:
-        flash('Você não pode rebaixar seu próprio usuário.', 'danger')
-        return redirect(url_for('listar_usuarios'))
-    
-    usuario = User.query.get_or_404(id)
-    usuario.is_admin = False
-    usuario.nivel_acesso = 'usuario'
-    db.session.commit()
-    
-    flash(f'Usuário {usuario.nome} rebaixado para usuário comum.', 'success')
     return redirect(url_for('listar_usuarios'))
 
 if __name__ == '__main__':
