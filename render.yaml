@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: sistema-abordagens
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.0
+      - key: SECRET_KEY
+        generateValue: true
+      - key: FLASK_APP
+        value: app.py
+      - key: FLASK_ENV
+        value: production
+      - key: RENDER
+        value: true
+      - key: DATABASE_URL
+        value: postgresql://sistema_abordagens_db_user:W87FB2SCGBgDh1Ct6VjlCLNyGPrR4UGm@dpg-cvpv29muk2gs73e9d7ig-a/sistema_abordagens_db
+      - key: CLOUDINARY_CLOUD_NAME
+        value: dkj83qihx
+      - key: CLOUDINARY_API_KEY
+        value: 695527639461583
+      - key: CLOUDINARY_API_SECRET
+        value: p5MJmNhADIqnLm7z5GPzbesRNeM
+    disk:
+      name: uploads
+      mountPath: /opt/render/project/src/static/uploads
+      sizeGB: 1 

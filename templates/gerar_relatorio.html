@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Gerar Relatório - Sistema de Registro de Abordagens Policiais{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    .card {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h4 class="mb-0"><i class="fas fa-file-pdf me-2"></i>Gerar Relatório de Abordagens</h4>
+    </div>
+    <div class="card-body">
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="form-group mb-4">
+                <label class="form-label">Tipo de Relatório</label>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="tipo_relatorio" id="relatorio_simples" value="simples" checked>
+                    <label class="form-check-label" for="relatorio_simples">
+                        Relatório Simples (apenas dados básicos)
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="tipo_relatorio" id="relatorio_completo" value="completo">
+                    <label class="form-check-label" for="relatorio_completo">
+                        Relatório Completo (inclui fotos e todas as informações)
+                    </label>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="data_inicio" class="form-label">Data de Início</label>
+                        <input type="date" class="form-control" id="data_inicio" name="data_inicio">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="data_fim" class="form-label">Data de Fim</label>
+                        <input type="date" class="form-control" id="data_fim" name="data_fim">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="nome" class="form-label">Nome (opcional)</label>
+                <input type="text" class="form-control" id="nome" name="nome" placeholder="Digite o nome para filtrar">
+                <div class="form-text">Deixe em branco para incluir todas as abordagens no período.</div>
+            </div>
+            
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                <a href="{{ url_for('index') }}" class="btn btn-secondary me-md-2">
+                    <i class="fas fa-times me-1"></i>Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-file-pdf me-1"></i>Gerar Relatório
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %} 
