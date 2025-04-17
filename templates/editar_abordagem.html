@@ -165,7 +165,11 @@
                     </div>
                 {% endif %}
                 {% if abordagem.imagem %}
+<<<<<<< HEAD
                     <img src="{{ url_for('static', filename='uploads/' + abordagem.imagem) }}" class="preview-image mt-2" alt="Imagem atual">
+=======
+                    <img src="{{ abordagem.imagem }}" class="preview-image mt-2" alt="Imagem atual">
+>>>>>>> master
                 {% endif %}
             </div>
 
@@ -180,7 +184,11 @@
                     </div>
                 {% endif %}
                 {% if abordagem.historico_pca %}
+<<<<<<< HEAD
                     <img src="{{ url_for('static', filename='uploads/' + abordagem.historico_pca) }}" class="preview-image mt-2" alt="Histórico PCA atual">
+=======
+                    <img src="{{ abordagem.historico_pca }}" class="preview-image mt-2" alt="Histórico PCA atual">
+>>>>>>> master
                 {% endif %}
             </div>
 

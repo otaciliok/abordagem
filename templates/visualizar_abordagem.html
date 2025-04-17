@@ -112,6 +112,7 @@
                 
                 {% if abordagem.imagem %}
                 <div class="row mt-4">
+<<<<<<< HEAD
                     <div class="col-md-12">
                         <div class="detail-group">
                             <div class="detail-label d-flex justify-content-between align-items-center">
@@ -122,6 +123,15 @@
                             </div>
                             <div class="image-container">
                                 <img src="{{ url_for('uploaded_file', filename=abordagem.imagem) }}" alt="Imagem da abordagem">
+=======
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Imagem</h5>
+                            </div>
+                            <div class="card-body">
+                                <img src="{{ abordagem.imagem }}" class="img-fluid" alt="Imagem da abordagem">
+>>>>>>> master
                             </div>
                         </div>
                     </div>
@@ -130,6 +140,7 @@
 
                 {% if abordagem.historico_pca %}
                 <div class="row mt-4">
+<<<<<<< HEAD
                     <div class="col-md-12">
                         <div class="detail-group">
                             <div class="detail-label d-flex justify-content-between align-items-center">
@@ -140,6 +151,15 @@
                             </div>
                             <div class="image-container">
                                 <img src="{{ url_for('uploaded_file', filename=abordagem.historico_pca) }}" alt="Histórico do PCA">
+=======
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Histórico PCA</h5>
+                            </div>
+                            <div class="card-body">
+                                <img src="{{ abordagem.historico_pca }}" class="img-fluid" alt="Histórico PCA">
+>>>>>>> master
                             </div>
                         </div>
                     </div>
