@@ -46,12 +46,10 @@ app.config.update(
 
 # Configuração do upload de arquivos
 if os.environ.get('RENDER'):
-    app.config['UPLOAD_FOLDER'] = '/mnt/upload'  # Caminho do Persistent Disk no Render
+    app.config['UPLOAD_FOLDER'] = '/mnt/uploads'  # Caminho correto do Persistent Disk no Render
 else:
     app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads')
-
-# Garantir que o diretório de upload existe
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)  # Só cria localmente
 
 # Inicialização das extensões
 csrf = CSRFProtect(app)
