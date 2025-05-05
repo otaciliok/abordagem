@@ -44,13 +44,13 @@ app.config.update(
     WTF_CSRF_ENABLED=True
 )
 
-# Configuração da pasta de uploads para o Render
-if os.getenv('RENDER'):
-    app.config['UPLOAD_FOLDER'] = '/opt/render/project/src/static/uploads'
+# Configuração do upload de arquivos
+if os.environ.get('RENDER'):
+    app.config['UPLOAD_FOLDER'] = '/mnt/upload'  # Caminho do Persistent Disk no Render
 else:
     app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads')
 
-# Garantir que a pasta de uploads existe
+# Garantir que o diretório de upload existe
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # Inicialização das extensões
